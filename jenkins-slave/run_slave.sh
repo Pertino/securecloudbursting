@@ -8,7 +8,7 @@ Log() {
 BUILDS_HOME=/home/jenkins
 
 # Hostname of your Jenkins master
-buildhost="http://172.17.0.68:8080"
+buildhost="http://<yourhost>:8080"
 
 # Custom Labels to apply
 labels="labels=StandardSlave"
