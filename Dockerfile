@@ -63,6 +63,8 @@ RUN apt-get install -y python-pip
 RUN apt-get install -y python-setuptools
 RUN apt-get install -y xz-utils
 RUN apt-get install -y binutils
+RUN apt-get install -y python3-pip
+RUN apt-get install -y rsync
 
 # Install Oracle Java
 RUN echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections
@@ -76,3 +78,6 @@ RUN usermod -a -G sudo pertino && chsh -s /bin/bash pertino
 RUN rm /etc/nologin
 RUN sed -i s/"session    required     pam_loginuid.so"/"#session    required     pam_loginuid.so"/g /etc/pam.d/sshd
 RUN echo LANG="en_US.UTF-8" > /etc/default/locale
+
+RUN mkdir .ssh
+RUN ssh-keygen -t rsa -N "" -C pertinodemo@woydziak.com -f .ssh/id_rsa

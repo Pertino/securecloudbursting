@@ -1,0 +1,79 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>filter</name>
+          <description>Filter slaves to delete</description>
+          <defaultValue>slave</defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>master</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.plugins.groovy.SystemGroovy plugin="groovy@1.20">
+      <scriptSource class="hudson.plugins.groovy.StringScriptSource">
+        <command>import jenkins.model.*
+import hudson.model.*
+import hudson.slaves.*
+  
+// Retrieve parameters of the current build
+def filter = build.buildVariableResolver.resolve(&quot;filter&quot;)
+println &quot;Delete Filter = $filter&quot;
+
+nodes = Jenkins.instance.getNodes()
+out.println nodes
+Iterator&lt;hudson.model.Node&gt; i = nodes.iterator();
+while (i.hasNext()) {
+    Node obj = i.next();
+    if (obj.getNodeName().count(&quot;slave&quot;) &gt; 0)
+    {
+      if (obj.getNodeName().count(&quot;$filter&quot;) &gt; 0)
+        {
+            Jenkins.instance.removeNode(obj);
+        }
+    }
+}</command>
+      </scriptSource>
+      <bindings></bindings>
+      <classpath></classpath>
+    </hudson.plugins.groovy.SystemGroovy>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+cat &gt; .dynamicMachine &lt;&lt;EOF
+{
+    &quot;DigitalOcean&quot; : {
+        &quot;Client ID&quot;          : &quot;f4b438f2b1f3c2733b20d9d21a903b7a&quot;,
+        &quot;API Key&quot;            : &quot;95c48bb9e871dbb8b4c9322e1191d9e5&quot;
+    },
+    &quot;BaseHostName&quot;: &quot;auto&quot;
+}
+EOF
+
+set +x
+echo &quot;--------------------------------------------------------------------------------------------------- Delete Digital Cloud Slaves&quot;
+set -x
+if [ &quot;$filter&quot; = &quot;&quot; ]; then
+  echo &quot;Delete All&quot;
+  delete_machines.py
+else
+  echo &quot;Delete $filter machines&quot; 
+  delete_machines.py --filter ${filter}
+fi</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

@@ -1,0 +1,179 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>uniquifyHost</name>
+          <description></description>
+          <defaultValue></defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>true</concurrentBuild>
+  <builders>
+    <hudson.plugins.groovy.SystemGroovy plugin="groovy@1.20">
+      <scriptSource class="hudson.plugins.groovy.StringScriptSource">
+        <command>import jenkins.model.*
+import hudson.model.*
+import hudson.slaves.*
+
+// Use a differentiator provided to uniquely identify the host created.
+def differentiator = build.buildVariableResolver.resolve(&quot;uniquifyHost&quot;)
+
+// Add the node to Jenkins Master list of nodes
+Jenkins.instance.addNode(new DumbSlave(&quot;slave-auto$differentiator&quot;,&quot;test slave description&quot;,&quot;/home/jenkins/slave&quot;,&quot;1&quot;,Node.Mode.NORMAL,&quot;StandardSlave&quot;,new JNLPLauncher(),new RetentionStrategy.Always(),new LinkedList()))</command>
+      </scriptSource>
+      <bindings></bindings>
+      <classpath></classpath>
+    </hudson.plugins.groovy.SystemGroovy>
+    <hudson.tasks.Shell>
+      <command>set +x
+echo &quot;--------------------------------------------------------------------------------------------------- Setup ENV&quot;
+set -x
+
+cat &gt; .dynamicMachine &lt;&lt;EOF
+{
+    &quot;DigitalOcean&quot; : {
+        &quot;Client ID&quot;          : &quot;f4b438f2b1f3c2733b20d9d21a903b7a&quot;,
+        &quot;API Key&quot;            : &quot;95c48bb9e871dbb8b4c9322e1191d9e5&quot;,
+        &quot;location&quot;           : &quot;San Francisco&quot;,
+        &quot;image&quot;              : &quot;Docker&quot;,
+        &quot;size&quot;               : &quot;1GB&quot;,
+        &quot;sshKey&quot;             : &quot;/.ssh/id_rsa.pub&quot;
+    },
+    &quot;BaseHostName&quot;: &quot;auto${uniquifyHost}&quot;
+}
+EOF
+
+
+set +x
+echo &quot;--------------------------------------------------------------------------------------------------- Create Digital Cloud Slave&quot;
+set -x
+create_machine.py | tee cm.txt
+export NEW_IP=`cat cm.txt | awk &apos;{match( $0, /\(.*\)/ ) ; s = substr($0,RSTART, RLENGTH); gsub(/[()]/, &quot;&quot;, s); print s}&apos;`
+rm cm.txt 
+
+set +x
+echo &quot;--------------------------------------------------------------------------------------------------- Configure Slave&quot;
+set -x
+
+cat &gt; .dynamicMachineConfig &lt;&lt;EOF
+{
+    &quot;username&quot; : &quot;root&quot;,
+    &quot;password&quot; : &quot;&quot;,
+    &quot;commands&quot; : [ 
+        {&quot;wget http://pertino-installers.s3-website-us-east-1.amazonaws.com/clients/linux/300-4050/pertino_300.4050-1_amd64.deb&quot;:
+            {&quot;assertResultEquals&quot;:&quot;saved&quot;}},
+        {&quot;ls&quot;:{&quot;assertResultEquals&quot;: &quot;pertino_300.4050-1_amd64.deb&quot;}},
+        {&quot;export DEBIAN_FRONTEND=readline &amp;&amp; dpkg -i pertino_300.4050-1_amd64.deb&quot;:{&quot;assertResultEquals&quot;:[[&quot;Username:&quot;,&quot;Setting up pertino-client&quot;],30]}},
+        {&quot;pertinodemo@woydziak.com&quot;:{&quot;assertResultEquals&quot;:[[&quot;Password:&quot;,&quot;command not found&quot;],30]}}, 
+        {&quot;password123&quot;:{&quot;assertResultEquals&quot;:[[&quot;addgroup {username} pertino&quot;,&quot;command not found&quot;],30]}}, 
+        {&quot;iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
+        {&quot;iptables -A INPUT -i eth0 -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
+        {&quot;iptables -A OUTPUT -o eth0 -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
+        {&quot;iptables -A INPUT -i tun -j ACCEPT&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
+        {&quot;iptables -A INPUT -i pertino0 -j ACCEPT&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
+        {&quot;iptables -A INPUT -i lo -j ACCEPT&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
+        {&quot;iptables -A FORWARD -i eth0 -j DROP&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
+        {&quot;iptables -A INPUT -i eth0 -j DROP&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
+        {&quot;iptables -P INPUT DROP&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
+        {&quot;iptables -P FORWARD DROP&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
+        {&quot;sudo service docker restart&quot;:{&quot;assertResultEquals&quot;:&quot;docker start/running&quot;}},
+	{&quot;docker pull ubuntu.xmfwkm.pertino.net:5000/jenkins-slave&quot;:{&quot;assertResultEquals&quot;:&quot;Download complete&quot;}}, 
+        {&quot;&quot;:{&quot;assertResultEquals&quot;:[&quot;root@&quot;,1440]}},
+        {&quot;export IPADDRESS=`ifconfig pertino0 | grep \&apos;inet addr\&apos; | awk -F: \&apos;{print \$2}\&apos; | awk \&apos;{print \$1}\&apos;`&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
+        {&quot;sudo docker run --privileged -p \${IPADDRESS}:9022:22 -h \${HOSTNAME} -d ubuntu.xmfwkm.pertino.net:5000/jenkins-slave&quot;:{&quot;assertResultNotEquals&quot;:&quot;Unable to find image&quot;}}
+    ]
+}
+EOF
+
+rm -f ~/.ssh/known_hosts
+configure_machine.py --ip $NEW_IP --jsonFile .dynamicMachineConfig
+
+echo &quot;Created \&quot;auto${uniquifyHost}\&quot; at ${NEW_IP}&quot;</command>
+    </hudson.tasks.Shell>
+    <hudson.plugins.groovy.SystemGroovy plugin="groovy@1.20">
+      <scriptSource class="hudson.plugins.groovy.StringScriptSource">
+        <command>import jenkins.model.*
+import hudson.model.*
+import hudson.slaves.*
+import hudson.AbortException
+import hudson.console.HyperlinkNote
+import java.util.concurrent.CancellationException
+
+// How many re-trys do you want?
+numberOfChecksToPerform = 50
+
+// Retrieve parameters of the current build
+differentiator = build.buildVariableResolver.resolve(&quot;uniquifyHost&quot;)
+
+// Start the whole process again
+def startAnotherSlave() {
+  def job = Hudson.instance.getJob(&apos;AddJenkinsSlave&apos;)
+  def anotherBuild
+  try {
+    def params = [
+      new StringParameterValue(&apos;uniquifyHost&apos;, &quot;$differentiator-1&quot;),
+    ]
+    def future = job.scheduleBuild2(0, new Cause.UpstreamCause(build), new ParametersAction(params))
+    println &quot;Waiting for the completion of &quot; + HyperlinkNote.encodeTo(&apos;/&apos; + job.url, job.fullDisplayName)
+    anotherBuild = future.get()
+  } catch (CancellationException x) {
+    throw new AbortException(&quot;${job.fullDisplayName} aborted.&quot;)
+  }
+  println HyperlinkNote.encodeTo(&apos;/&apos; + anotherBuild.url, anotherBuild.fullDisplayName) + &quot; completed. Result was &quot; + anotherBuild.result
+}
+
+// check to see if the right slave is online
+def slaveOnline(trys){
+  // Search all the slaves
+  for (aSlave in hudson.model.Hudson.instance.slaves) {
+    if (aSlave.name.count(&quot;slave-auto$differentiator&quot;) &lt; 1) {
+      // check next slave
+      continue
+    }
+  
+    if (aSlave.getComputer().isOffline()) {
+      if (trys &lt; numberOfChecksToPerform-1) {
+        return false;
+      }
+      println &quot;Slave has not started, start another...&quot;;
+      startAnotherSlave();
+      return true;
+    }
+    else {
+      return true;
+    }
+  }
+  throw new hudson.AbortException(&quot;Slave never added to Jenkins inventory: slave-auto$differentiator&quot;);
+}
+
+
+println &quot;Checking to see if slave-auto$differentiator is up&quot;;
+for ( thisTime in 0..numberOfChecksToPerform ) {
+
+  if(slaveOnline(thisTime)){
+    break;
+  }
+  sleep(5000);
+}
+</command>
+      </scriptSource>
+      <bindings></bindings>
+      <classpath></classpath>
+    </hudson.plugins.groovy.SystemGroovy>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

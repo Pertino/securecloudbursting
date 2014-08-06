@@ -9,10 +9,21 @@ RUN apt-get update
 
 # Install Jenkins in our container
 RUN apt-get install -y jenkins
+RUN echo "jenkins:12345six" | chpasswd
+
+# Install template jobs
+RUN mkdir -p /var/lib/jenkins/.jenkins/jobs
+
+# Install Dynamic Machine
+RUN pip3 install -U --process-dependency-links "git+git://github.com/Pertino/dynamic_machine#egg=dynamic_machine-1.0.0"
 
 # Add supervisor configuration
 RUN mkdir -p /var/log/supervisor /var/run/sshd
 ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Allow ssh connection to dynamic machines
+RUN cp -R /.ssh/ /var/lib/jenkins/
+RUN chown -R jenkins:jenkins /var/lib/jenkins
 
 # Expose the SSH and Jenkins TCP/IP ports 
 EXPOSE 22 8080 54525

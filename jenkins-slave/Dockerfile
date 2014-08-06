@@ -31,6 +31,14 @@ RUN groupadd docker || true
 RUN gpasswd -a jenkins docker
 ADD wrapdocker /usr/bin/wrapdocker
 
+# Install Dynamic Machine
+RUN pip3 install -U --process-dependency-links "git+git://github.com/Pertino/dynamic_machine#egg=dynamic_machine-1.0.0"
+
+# Allow sshing to the dynamic machine
+RUN cp -R /.ssh/ /home/jenkins/
+RUN cp -R /.ssh/ /root/
+RUN chown -R jenkins.jenkins /home/jenkins/.ssh
+
 EXPOSE 22
 
 ENTRYPOINT ["/usr/bin/supervisord"]
