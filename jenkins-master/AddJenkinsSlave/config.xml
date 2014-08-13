@@ -45,8 +45,8 @@ set -x
 cat &gt; .dynamicMachine &lt;&lt;EOF
 {
     &quot;DigitalOcean&quot; : {
-        &quot;Client ID&quot;          : &quot;f4b438f2b1f3c2733b20d9d21a903b7a&quot;,
-        &quot;API Key&quot;            : &quot;95c48bb9e871dbb8b4c9322e1191d9e5&quot;,
+        &quot;Client ID&quot;          : &quot;&lt;yourClientId&gt;&quot;,
+        &quot;API Key&quot;            : &quot;&lt;yourApiKey&gt;&quot;,
         &quot;location&quot;           : &quot;San Francisco&quot;,
         &quot;image&quot;              : &quot;Docker&quot;,
         &quot;size&quot;               : &quot;1GB&quot;,
@@ -77,8 +77,8 @@ cat &gt; .dynamicMachineConfig &lt;&lt;EOF
             {&quot;assertResultEquals&quot;:&quot;saved&quot;}},
         {&quot;ls&quot;:{&quot;assertResultEquals&quot;: &quot;pertino_300.4050-1_amd64.deb&quot;}},
         {&quot;export DEBIAN_FRONTEND=readline &amp;&amp; dpkg -i pertino_300.4050-1_amd64.deb&quot;:{&quot;assertResultEquals&quot;:[[&quot;Username:&quot;,&quot;Setting up pertino-client&quot;],30]}},
-        {&quot;pertinodemo@woydziak.com&quot;:{&quot;assertResultEquals&quot;:[[&quot;Password:&quot;,&quot;command not found&quot;],30]}}, 
-        {&quot;password123&quot;:{&quot;assertResultEquals&quot;:[[&quot;addgroup {username} pertino&quot;,&quot;command not found&quot;],30]}}, 
+        {&quot;&lt;yourPertinoEmailHere&gt;&quot;:{&quot;assertResultEquals&quot;:[[&quot;Password:&quot;,&quot;command not found&quot;],30]}}, 
+        {&quot;&lt;yourPertinoPasswordHere&gt;&quot;:{&quot;assertResultEquals&quot;:[[&quot;addgroup {username} pertino&quot;,&quot;command not found&quot;],30]}}, 
         {&quot;iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
         {&quot;iptables -A INPUT -i eth0 -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
         {&quot;iptables -A OUTPUT -o eth0 -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
@@ -90,10 +90,10 @@ cat &gt; .dynamicMachineConfig &lt;&lt;EOF
         {&quot;iptables -P INPUT DROP&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
         {&quot;iptables -P FORWARD DROP&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
         {&quot;sudo service docker restart&quot;:{&quot;assertResultEquals&quot;:&quot;docker start/running&quot;}},
-	{&quot;docker pull ubuntu.xmfwkm.pertino.net:5000/jenkins-slave&quot;:{&quot;assertResultEquals&quot;:&quot;Download complete&quot;}}, 
+	{&quot;docker pull &lt;FQDN&gt;:5000/jenkins-slave&quot;:{&quot;assertResultEquals&quot;:&quot;Download complete&quot;}}, 
         {&quot;&quot;:{&quot;assertResultEquals&quot;:[&quot;root@&quot;,1440]}},
         {&quot;export IPADDRESS=`ifconfig pertino0 | grep \&apos;inet addr\&apos; | awk -F: \&apos;{print \$2}\&apos; | awk \&apos;{print \$1}\&apos;`&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
-        {&quot;sudo docker run --privileged -p \${IPADDRESS}:9022:22 -h \${HOSTNAME} -d ubuntu.xmfwkm.pertino.net:5000/jenkins-slave&quot;:{&quot;assertResultNotEquals&quot;:&quot;Unable to find image&quot;}}
+        {&quot;sudo docker run --privileged -p \${IPADDRESS}:9022:22 -h \${HOSTNAME} -d &lt;FQDN&gt;:5000/jenkins-slave&quot;:{&quot;assertResultNotEquals&quot;:&quot;Unable to find image&quot;}}
     ]
 }
 EOF

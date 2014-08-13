@@ -57,8 +57,8 @@ while (i.hasNext()) {
 cat &gt; .dynamicMachine &lt;&lt;EOF
 {
     &quot;DigitalOcean&quot; : {
-        &quot;Client ID&quot;          : &quot;f4b438f2b1f3c2733b20d9d21a903b7a&quot;,
-        &quot;API Key&quot;            : &quot;95c48bb9e871dbb8b4c9322e1191d9e5&quot;
+        &quot;Client ID&quot;          : &quot;&lt;yourClientId&gt;&quot;,
+        &quot;API Key&quot;            : &quot;&lt;yourApiKey&gt;&quot;
     },
     &quot;BaseHostName&quot;: &quot;auto&quot;
 }
