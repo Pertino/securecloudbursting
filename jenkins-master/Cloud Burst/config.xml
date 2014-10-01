@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<com.cloudbees.plugins.flow.BuildFlow plugin="build-flow-plugin@0.15">
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>master</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders/>
+  <publishers/>
+  <buildWrappers/>
+  <icon/>
+  <dsl>def build_info = build.toString()
+def build_info_split = build_info.split(&apos;#&apos;)
+def build_number = build_info_split[1]
+out.println build_number
+
+guard {
+parallel(
+    {build(&quot;AddJenkinsSlave&quot;, 	uniquifyHost:&quot;-burst-${build_number}-0&quot;)},
+    {build(&quot;AddJenkinsSlave&quot;, 	uniquifyHost:&quot;-burst-${build_number}-1&quot;)},
+    {build(&quot;AddJenkinsSlave&quot;, 	uniquifyHost:&quot;-burst-${build_number}-2&quot;)},
+    {build(&quot;AddJenkinsSlave&quot;, uniquifyHost:&quot;-burst-${build_number}-3&quot;)},
+    {build(&quot;AddJenkinsSlave&quot;, uniquifyHost:&quot;-burst-${build_number}-4&quot;)},
+    {build(&quot;AddJenkinsSlave&quot;, uniquifyHost:&quot;-burst-${build_number}-5&quot;)},
+    {build(&quot;AddJenkinsSlave&quot;, uniquifyHost:&quot;-burst-${build_number}-6&quot;)},
+    {build(&quot;AddJenkinsSlave&quot;, uniquifyHost:&quot;-burst-${build_number}-7&quot;)},
+    {build(&quot;AddJenkinsSlave&quot;, uniquifyHost:&quot;-burst-${build_number}-8&quot;)},
+    {build(&quot;AddJenkinsSlave&quot;, uniquifyHost:&quot;-burst-${build_number}-9&quot;)}
+)
+parallel(
+    {build(&quot;BurstJob&quot;, differentiator:&quot;-${build_number}-0&quot;)},
+    {build(&quot;BurstJob&quot;, differentiator:&quot;-${build_number}-1&quot;)},
+    {build(&quot;BurstJob&quot;, differentiator:&quot;-${build_number}-2&quot;)},
+    {build(&quot;BurstJob&quot;, differentiator:&quot;-${build_number}-3&quot;)},
+    {build(&quot;BurstJob&quot;, differentiator:&quot;-${build_number}-4&quot;)},
+    {build(&quot;BurstJob&quot;, differentiator:&quot;-${build_number}-5&quot;)},
+    {build(&quot;BurstJob&quot;, differentiator:&quot;-${build_number}-6&quot;)},
+    {build(&quot;BurstJob&quot;, differentiator:&quot;-${build_number}-7&quot;)},
+    {build(&quot;BurstJob&quot;, differentiator:&quot;-${build_number}-8&quot;)},
+    {build(&quot;BurstJob&quot;, differentiator:&quot;-${build_number}-9&quot;)}
+)
+
+} rescue {
+    build(&quot;DeleteJenkinsSlaves&quot;, filter:&quot;burst-${build_number}&quot;)
+}</dsl>
+  <buildNeedsWorkspace>false</buildNeedsWorkspace>
+</com.cloudbees.plugins.flow.BuildFlow>

@@ -22,7 +22,7 @@
   <triggers/>
   <concurrentBuild>true</concurrentBuild>
   <builders>
-    <hudson.plugins.groovy.SystemGroovy plugin="groovy@1.20">
+    <hudson.plugins.groovy.SystemGroovy plugin="groovy@1.22">
       <scriptSource class="hudson.plugins.groovy.StringScriptSource">
         <command>import jenkins.model.*
 import hudson.model.*
@@ -73,12 +73,15 @@ cat &gt; .dynamicMachineConfig &lt;&lt;EOF
     &quot;username&quot; : &quot;root&quot;,
     &quot;password&quot; : &quot;&quot;,
     &quot;commands&quot; : [ 
-        {&quot;wget http://pertino-installers.s3-website-us-east-1.amazonaws.com/clients/linux/300-4050/pertino_300.4050-1_amd64.deb&quot;:
-            {&quot;assertResultEquals&quot;:&quot;saved&quot;}},
-        {&quot;ls&quot;:{&quot;assertResultEquals&quot;: &quot;pertino_300.4050-1_amd64.deb&quot;}},
-        {&quot;export DEBIAN_FRONTEND=readline &amp;&amp; dpkg -i pertino_300.4050-1_amd64.deb&quot;:{&quot;assertResultEquals&quot;:[[&quot;Username:&quot;,&quot;Setting up pertino-client&quot;],30]}},
+        {&quot;wget http://reposerver.pertino.com/Pertino-GPG-Key.pub | apt-key add Pertino-GPG-Key.pub&quot;:
+            {&quot;assertResultEquals&quot;:&quot;OK&quot;}},
+        {&quot;echo &apos;deb http://reposerver.pertino.com/debs precise multiverse&apos; &gt; /etc/apt/sources.list.d/pertino.list&quot;:
+            {&quot;assertResultEquals&quot;:&quot;root@&quot;}},
+        {&quot;apt-get update&quot;:{&quot;assertResultEquals&quot;:[&quot;Done&quot;,30]}},
+        {&quot;export DEBIAN_FRONTEND=readline &amp;&amp; apt-get -y --force-yes install pertino-client&quot;:{&quot;assertResultEquals&quot;:[[&quot;Username:&quot;,&quot;Setting up pertino-client&quot;,&quot;0 newly installed&quot;],30]}},
         {&quot;&lt;yourPertinoEmailHere&gt;&quot;:{&quot;assertResultEquals&quot;:[[&quot;Password:&quot;,&quot;command not found&quot;],30]}}, 
         {&quot;&lt;yourPertinoPasswordHere&gt;&quot;:{&quot;assertResultEquals&quot;:[[&quot;addgroup {username} pertino&quot;,&quot;command not found&quot;],30]}}, 
+        {&quot;ifconfig pertino0&quot;:{&quot;assertResultEquals&quot;:&quot;inet addr&quot;}},
         {&quot;iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
         {&quot;iptables -A INPUT -i eth0 -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
         {&quot;iptables -A OUTPUT -o eth0 -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
@@ -93,7 +96,9 @@ cat &gt; .dynamicMachineConfig &lt;&lt;EOF
 	{&quot;docker pull &lt;FQDN&gt;:5000/jenkins-slave&quot;:{&quot;assertResultEquals&quot;:&quot;Download complete&quot;}}, 
         {&quot;&quot;:{&quot;assertResultEquals&quot;:[&quot;root@&quot;,1440]}},
         {&quot;export IPADDRESS=`ifconfig pertino0 | grep \&apos;inet addr\&apos; | awk -F: \&apos;{print \$2}\&apos; | awk \&apos;{print \$1}\&apos;`&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}},
-        {&quot;sudo docker run --privileged -p \${IPADDRESS}:9022:22 -h \${HOSTNAME} -d &lt;FQDN&gt;:5000/jenkins-slave&quot;:{&quot;assertResultNotEquals&quot;:&quot;Unable to find image&quot;}}
+        {&quot;docker run --privileged -p \${IPADDRESS}:9022:22 -h \${HOSTNAME} -d &lt;FQDN&gt;:5000/jenkins-slave&quot;:{&quot;assertResultNotEquals&quot;:&quot;Unable to find image&quot;}},
+        {&quot;docker ps&quot;:{&quot;assertResultEquals&quot;:&quot;jenkins-slave&quot;}},
+        {&quot;ls&quot;:{&quot;assertResultEquals&quot;:&quot;root@&quot;}}
     ]
 }
 EOF
@@ -103,7 +108,7 @@ configure_machine.py --ip $NEW_IP --jsonFile .dynamicMachineConfig
 
 echo &quot;Created \&quot;auto${uniquifyHost}\&quot; at ${NEW_IP}&quot;</command>
     </hudson.tasks.Shell>
-    <hudson.plugins.groovy.SystemGroovy plugin="groovy@1.20">
+    <hudson.plugins.groovy.SystemGroovy plugin="groovy@1.22">
       <scriptSource class="hudson.plugins.groovy.StringScriptSource">
         <command>import jenkins.model.*
 import hudson.model.*

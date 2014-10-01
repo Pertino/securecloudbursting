@@ -32,7 +32,7 @@ RUN gpasswd -a jenkins docker
 ADD wrapdocker /usr/bin/wrapdocker
 
 # Install Dynamic Machine
-RUN pip3 install -U --process-dependency-links "git+git://github.com/Pertino/dynamic_machine#egg=dynamic_machine-1.0.0"
+RUN pip3 install -U DynamicMachine
 
 # Allow sshing to the dynamic machine
 RUN cp -R /.ssh/ /home/jenkins/

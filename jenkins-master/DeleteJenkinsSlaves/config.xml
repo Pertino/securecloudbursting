@@ -25,7 +25,7 @@
   <triggers/>
   <concurrentBuild>false</concurrentBuild>
   <builders>
-    <hudson.plugins.groovy.SystemGroovy plugin="groovy@1.20">
+    <hudson.plugins.groovy.SystemGroovy plugin="groovy@1.22">
       <scriptSource class="hudson.plugins.groovy.StringScriptSource">
         <command>import jenkins.model.*
 import hudson.model.*
@@ -59,6 +59,10 @@ cat &gt; .dynamicMachine &lt;&lt;EOF
     &quot;DigitalOcean&quot; : {
         &quot;Client ID&quot;          : &quot;&lt;yourClientId&gt;&quot;,
         &quot;API Key&quot;            : &quot;&lt;yourApiKey&gt;&quot;
+    },
+    &quot;Pertino&quot; : { 
+        &quot;username&quot;      : &quot;&lt;yourPertinoEmailHere&gt;&quot;, 
+        &quot;password&quot;      : &quot;&lt;yourPertinoPasswordHere&gt;&quot;  
     },
     &quot;BaseHostName&quot;: &quot;auto&quot;
 }
